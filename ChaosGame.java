@@ -1,11 +1,7 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Toolkit;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
 
 public class ChaosGame extends JFrame {
 
@@ -29,7 +25,7 @@ public class ChaosGame extends JFrame {
         DrawingPanel drawingPanel = new DrawingPanel();
 
         dPanel.setOpaque(true);
-        dPanel.setPreferredSize(new Dimension(1000, 500));
+        dPanel.setPreferredSize(new Dimension(1000, 700));
         dPanel.add(drawingPanel);
         getContentPane().add(dPanel, BorderLayout.CENTER);
         setVisible(true);
@@ -43,54 +39,63 @@ public class ChaosGame extends JFrame {
 
     private class DrawingPanel extends JPanel {
 
-        boolean init = true;
-        int size = 2;
+        int size = 1;
         Point[] initPoints = new Point[3];
+        ArrayList<Point> points = new ArrayList<>();
         Point mostRecent;
 
         public DrawingPanel() {
             setOpaque(true);
             setBackground(Color.BLACK);
-            setPreferredSize(new Dimension(1000, 600));
+            setPreferredSize(new Dimension(1000, 700));
             setPoints();
+            addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    System.out.println(e.getX() + " " + e.getY());
+                }
+            });
         }
 
         private void setPoints() {
-            initPoints[0] = new Point(100, 550); // bottom left corner
-            initPoints[1] = new Point(getWidth() / 2, 50); // middle upmost
-            initPoints[2] = new Point(getWidth() - 100, 550); // bottom right corner
+            initPoints[0] = new Point(100, 600); // bottom left corner
+            initPoints[1] = new Point(500, 50); // middle upmost
+            initPoints[2] = new Point(900, 600); // bottom right corner
+            for (int i = 0; i < initPoints.length; i++) {
+                points.add(initPoints[i]);
+            }
         }
 
         @Override
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
             g.setColor(Color.WHITE);
-            if (!init) {
-                mostRecent = getMidPoint(init);
-                g.drawOval(mostRecent.x, mostRecent.y, size, size);
+
+            for (int i = 0; i < points.size(); i++) {
+                g.drawOval(points.get(i).x, points.get(i).y, size, size);
+            }
+            if (points.size() == 5000) {
+                System.out.println("done");
+                return;
+            }
+            if (points.size() != 3) {
+                mostRecent = points.get(points.size() - 1);
+                int randInitPoint = (int) (Math.random() * 3);
+                Point midPoint = getMidPoint(initPoints[randInitPoint], mostRecent);
+                points.add(midPoint);
+                g.drawOval(midPoint.x, midPoint.y, size, size);
                 repaint();
             } else {
-                for (int i = 0; i < initPoints.length; i++) {
-                    g.drawOval(initPoints[i].x, initPoints[i].x, size, size);
-                }
-                Point midPoint = getMidPoint(init);
-                g.drawOval(midPoint.x, midPoint.y, size, size);
-                mostRecent = midPoint;
-                init = false;
+                Point firstRand = getMidPoint(initPoints[1], initPoints[2]);
+                points.add(firstRand);
+                g.drawOval(firstRand.x, firstRand.y, size, size);
                 repaint();
             }
+
         }
 
-        public Point getMidPoint(boolean init) {
-            int x, y = 0;
-            if (!init) {
-                int randomPoint = (int) (Math.random() * 3); 
-                x = (initPoints[randomPoint].x + mostRecent.x) / 2;
-                y = (initPoints[randomPoint].y + mostRecent.y) / 2;
-            } else {
-                x = (initPoints[0].x + initPoints[1].x) / 2;
-                y = (initPoints[0].y + initPoints[1].y) / 2;
-            }
+        public Point getMidPoint(Point one, Point two) {
+            int x = (one.x + two.x) / 2;
+            int y = (one.y + two.y) / 2;
             return new Point(x, y);
         }
 
